@@ -1,0 +1,50 @@
+# iagopm
+# NOTE : generate nginx certificates.
+# $$ = your proyect folder
+version: '3'
+services:
+  db:
+    image: mariadb:10
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: web
+    volumes:
+      - ./mariadb:/var/lib/mysql
+      - ./maridbconfig:/etc/mysql
+    networks:
+      network:
+        ipv4_address: "172.20.0.2"
+  webserver:
+    image: tomcat:7-jdk8
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8080:8080
+    volumes:
+      - ../target/$$:/usr/local/tomcat/webapps/ROOT.war
+      #Background routines
+      - ./media:/media
+    networks:
+      network:
+        ipv4_address: "172.20.0.3"
+  balancer:
+    container_name: nginx
+    image: nginx:1.17.9
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx
+      - ./nginx/ssl/:/etc/nginx/ssl/
+    networks:
+      network:
+        ipv4_address: "172.20.0.4"
+networks:
+  network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
